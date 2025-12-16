@@ -21,7 +21,11 @@ const rateLimitMap = new Map();
 const MAX_DAILY_GENERATIONS = 4;
 
 const rateLimiter = (req, res, next) => {
-  // Get IP address
+  // Rate limiting disabled for development/debugging
+  return next();
+
+  // Original logic preserved below:
+  /*
   const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
   const today = new Date().toISOString().split('T')[0];
 
@@ -33,11 +37,11 @@ const rateLimiter = (req, res, next) => {
     }
     userRecord.count++;
   } else {
-    // New user or new day
     rateLimitMap.set(ip, { date: today, count: 1 });
   }
 
   next();
+  */
 };
 
 app.post('/api/generate', rateLimiter, async (req, res) => {
@@ -51,7 +55,8 @@ app.post('/api/generate', rateLimiter, async (req, res) => {
     console.log('Type of input sending to Replicate:', Array.isArray([image]) ? 'ARRAY (Correct)' : 'STRING (Error)');
 
     // Manual fetch to ensure control over the input format
-    const model = "google/nano-banana-pro";
+    // Switched to google/nano-banana as requested by user
+    const model = "google/nano-banana";
     const response = await fetch(`https://api.replicate.com/v1/models/${model}/predictions`, {
       method: "POST",
       headers: {
@@ -60,7 +65,7 @@ app.post('/api/generate', rateLimiter, async (req, res) => {
       },
       body: JSON.stringify({
         input: {
-          image_input: [image], // Explicitly sending an array
+          image_input: [image], // Model expects 'image_input' as an array
           prompt: prompt,
           output_format: "jpg"
         }
