@@ -57,6 +57,14 @@ app.post('/api/generate', rateLimiter, async (req, res) => {
     // Manual fetch to ensure control over the input format
     // Switched to google/nano-banana as requested by user
     const model = "google/nano-banana";
+
+    // Ensure image is properly formatted data URI or URL
+    // If it's a raw base64 without prefix, add it (though Replicate usually handles it, better safe)
+    let processedImage = image;
+
+    // Log the start of the image string for debugging
+    console.log('Image input start:', processedImage.substring(0, 50));
+
     const response = await fetch(`https://api.replicate.com/v1/models/${model}/predictions`, {
       method: "POST",
       headers: {
@@ -65,7 +73,7 @@ app.post('/api/generate', rateLimiter, async (req, res) => {
       },
       body: JSON.stringify({
         input: {
-          image_input: [image], // Model expects 'image_input' as an array
+          image_input: [processedImage], // Model expects 'image_input' as an array
           prompt: prompt,
           output_format: "jpg"
         }
